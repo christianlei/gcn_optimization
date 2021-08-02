@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dropout
@@ -7,7 +8,9 @@ from tensorflow.keras.regularizers import l2
 import numpy as np
 import scipy.sparse as sp
 from spektral.layers import GCNConv
+from scipy.sparse import csr_matrix
 from tensorflow.keras.optimizers import Adam
+import matplotlib.pyplot as plt
 
 command_line_arg = int(sys.argv[1])
 
@@ -29,6 +32,7 @@ l2_reg = 5e-4
 learning_rate = .001
 num_classes = 41
 epochs = 600
+node_degrees = {}
 
 numNode_train = adj_train.shape[0]
 
@@ -58,14 +62,56 @@ model.compile(optimizer=optimizer,
 model.summary()
 model.load_weights(checkpoint_path)
 
+
+
+# N:
+print(N)
 # Evaluate model
 # (55334,)
 test_features = features[test_index]
+print("TEST INDEX SHAPE BEFORE SPLICE:", test_features.shape)
+
+test_features = features[test_index][0:command_line_arg]
 adj_test = adj[test_index, :][:, test_index]
+print("ADJ MATRIX BEFORE", adj_test.shape)
+adj_test = adj_test[:, :command_line_arg][:command_line_arg,:]
+print("ADJ MATRIX AFTER", adj_test.shape)
 
-# print("test_index_shape", test_index.shape)
+
+for row in adj_test:
+    degrees = row.count_nonzero()
+    if degrees in node_degrees:
+        node_degrees[degrees]+=1
+    else:
+        node_degrees[degrees] = 1
+
+fig = plt.figure()
+fig.suptitle('Degrees of Nodes in Graph', fontsize=20)
+plt.bar(list(node_degrees.keys()), node_degrees.values(), width=1.0, color='g')
+plt.xlabel("Degrees")
+plt.ylabel("Occurrences")
+plt.xlim(0,100)
+plt.show()
+plt.savefig('degrees.png')
+
+
+
+test_features = csr_matrix(test_features)
+adj_test = csr_matrix(adj_test)
+csr_matrix.sort_indices(test_features)
+csr_matrix.sort_indices(adj_test)
+
+
+
+print("TEST INDEX SHAPE AFTER SPLICE:", test_features.shape)
+# print("ADJ MATRIX AFTER", adj_test.shape)
 M = test_features.shape[0]
+print("M: ", M)
 
+start = time.time()
 tf.profiler.experimental.start('prediction_logs')
 y_pred = model.predict([test_features, adj_test], batch_size=M)
 tf.profiler.experimental.stop()
+end = time.time()
+
+print("overall time: ", end-start)
