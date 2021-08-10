@@ -1,6 +1,5 @@
 import time
 import scipy.sparse as sp
-import scipy
 import os
 import numpy as np
 import pdb
@@ -88,9 +87,6 @@ graph_conv_2 = GCNConv(num_classes,
                        use_bias=False)([dropout_2, fltr_in])
 
 # Build model
-
-
-
 model = Model(inputs=[X_in, fltr_in], outputs=graph_conv_2)
 optimizer = Adam(lr=learning_rate)
 model.compile(optimizer=optimizer,

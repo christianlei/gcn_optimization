@@ -11,6 +11,7 @@ from spektral.layers import GCNConv
 from scipy.sparse import csr_matrix
 from tensorflow.keras.optimizers import Adam
 import matplotlib.pyplot as plt
+import statistics
 
 command_line_arg = int(sys.argv[1])
 
@@ -19,7 +20,32 @@ def loadRedditFromNPZ(dataset_dir):
     data = np.load(dataset_dir+"reddit.npz")
     return adj, data['feats'], data['y_train'], data['y_val'], data['y_test'], data['train_index'], data['val_index'], data['test_index']
 
-adj, features, y_train, y_val, y_test, train_index, val_index, test_index = loadRedditFromNPZ("../data/")
+
+def create_node_degree_graph(figure_name, adj_mat):
+    node_degrees = {}
+    print(adj_mat.shape)
+    node_list = []
+
+    for row in adj_mat:
+        degrees = row.count_nonzero()
+        node_list.append(int(degrees))
+        if degrees in node_degrees:
+            node_degrees[degrees] += 1
+        else:
+            node_degrees[degrees] = 1
+
+    print("median: ", statistics.median(node_list))
+    fig = plt.figure()
+    fig.suptitle('Degrees of Nodes in Graph', fontsize=20)
+    plt.bar(list(node_degrees.keys()), node_degrees.values(), width=1.0, color='g')
+    plt.xlabel("Degrees")
+    plt.ylabel("Occurrences")
+    plt.xlim(0,400)
+    plt.show()
+    plt.savefig(figure_name)
+
+
+adj, features, y_train, y_val, y_test, train_index, val_index, test_index = loadRedditFromNPZ("../data/reddit/")
 adj = adj+adj.T
 
 adj_train = adj[train_index, :][:, train_index]
@@ -32,7 +58,6 @@ l2_reg = 5e-4
 learning_rate = .001
 num_classes = 41
 epochs = 600
-node_degrees = {}
 
 numNode_train = adj_train.shape[0]
 
@@ -65,40 +90,28 @@ model.load_weights(checkpoint_path)
 
 
 # N:
-print(N)
+# print(N)
 # Evaluate model
 # (55334,)
 test_features = features[test_index]
-print("TEST INDEX SHAPE BEFORE SPLICE:", test_features.shape)
+# print("TEST INDEX SHAPE BEFORE SPLICE:", test_features.shape)
 
 test_features = features[test_index][0:command_line_arg]
 adj_test = adj[test_index, :][:, test_index]
-print("ADJ MATRIX BEFORE", adj_test.shape)
+# print("ADJ MATRIX BEFORE", adj_test.shape)
 adj_test = adj_test[:, :command_line_arg][:command_line_arg,:]
-print("ADJ MATRIX AFTER", adj_test.shape)
+# print("ADJ MATRIX AFTER", adj_test.shape)
 
 
-for row in adj_test:
-    degrees = row.count_nonzero()
-    if degrees in node_degrees:
-        node_degrees[degrees]+=1
-    else:
-        node_degrees[degrees] = 1
+# create_node_degree_graph('degree_test.png', adj_test)
 
-fig = plt.figure()
-fig.suptitle('Degrees of Nodes in Graph', fontsize=20)
-plt.bar(list(node_degrees.keys()), node_degrees.values(), width=1.0, color='g')
-plt.xlabel("Degrees")
-plt.ylabel("Occurrences")
-plt.xlim(0,100)
-plt.show()
-plt.savefig('degrees.png')
 
+create_node_degree_graph('full_graph_degrees.png', adj)
 
 
 test_features = csr_matrix(test_features)
 adj_test = csr_matrix(adj_test)
-csr_matrix.sort_indices(test_features)
+# csr_matrix.sort_indices(test_features)
 csr_matrix.sort_indices(adj_test)
 
 
@@ -108,10 +121,12 @@ print("TEST INDEX SHAPE AFTER SPLICE:", test_features.shape)
 M = test_features.shape[0]
 print("M: ", M)
 
-start = time.time()
 tf.profiler.experimental.start('prediction_logs')
+start = time.time()
 y_pred = model.predict([test_features, adj_test], batch_size=M)
-tf.profiler.experimental.stop()
 end = time.time()
+tf.profiler.experimental.stop()
+
+print("shape: ", y_pred.shape)
 
 print("overall time: ", end-start)

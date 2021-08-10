@@ -13,7 +13,8 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import EarlyStopping
 from spektral.layers import GCNConv
-
+import matplotlib.pyplot as plt
+import statistics
 
 #loading the data
 
@@ -92,6 +93,29 @@ def limit_data(labels,limit=20,val_num=500,test_num=1000):
     test_idx = rest_idx[val_num:(val_num+test_num)]
     return train_idx, val_idx,test_idx
 
+def create_node_degree_graph(figure_name, adj_mat):
+    node_degrees = {}
+    print(adj_mat.shape)
+    node_list = []
+
+    for row in adj_mat:
+        degrees = row.count_nonzero()
+        node_list.append(int(degrees))
+        if degrees in node_degrees:
+            node_degrees[degrees]+=1
+        else:
+            node_degrees[degrees] = 1
+
+    print("median: ", statistics.median(node_list))
+    fig = plt.figure()
+    fig.suptitle('Degrees of Nodes in Graph - CORA', fontsize=20)
+    plt.bar(list(node_degrees.keys()), node_degrees.values(), width=1.0, color='g')
+    plt.xlabel("Degrees")
+    plt.ylabel("Occurrences")
+    plt.xlim(0,30)
+    plt.show()
+    plt.savefig(figure_name)
+
 train_idx,val_idx,test_idx = limit_data(labels)
 
 #set the mask
@@ -114,6 +138,8 @@ G.add_edges_from(edge_list)
 #obtain the adjacency matrix (A)
 A = nx.adjacency_matrix(G)
 print('Graph info: ', nx.info(G))
+
+create_node_degree_graph('cora_degree_graph.png', A)
 
 #__________________________________
 
@@ -173,28 +199,28 @@ callback_GCN = [tbCallBack_GCN]
 #_________________________________________-
 
 # Train model
-validation_data = ([X, A], labels_encoded, val_mask)
-model.fit([X, A],
-          labels_encoded,
-          sample_weight=train_mask,
-          epochs=epochs,
-          batch_size=N,
-          validation_data=validation_data,
-          shuffle=False,
-          callbacks=[
-              EarlyStopping(patience=es_patience,  restore_best_weights=True),
-              tbCallBack_GCN
-          ])
-# Evaluate model
-X_te = X[test_mask]
-A_te = A[test_mask,:][:,test_mask]
-y_te = labels_encoded[test_mask]
+# validation_data = ([X, A], labels_encoded, val_mask)
+# model.fit([X, A],
+#           labels_encoded,
+#           sample_weight=train_mask,
+#           epochs=epochs,
+#           batch_size=N,
+#           validation_data=validation_data,
+#           shuffle=False,
+#           callbacks=[
+#               EarlyStopping(patience=es_patience,  restore_best_weights=True),
+#               tbCallBack_GCN
+#           ])
+# # Evaluate model
+# X_te = X[test_mask]
+# A_te = A[test_mask,:][:,test_mask]
+# y_te = labels_encoded[test_mask]
 
-M = X_te.shape[0]
-# print("batch size:", N)
-tf.profiler.experimental.start('logdir')
-pdb.set_trace()
-y_pred = model.predict([X_te, A_te], batch_size=M)
-tf.profiler.experimental.stop()
-report = classification_report(np.argmax(y_te,axis=1), np.argmax(y_pred,axis=1), target_names=classes)
-print('GCN Classification Report: \n {}'.format(report))
+# M = X_te.shape[0]
+# # print("batch size:", N)
+# tf.profiler.experimental.start('logdir')
+# pdb.set_trace()
+# y_pred = model.predict([X_te, A_te], batch_size=M)
+# tf.profiler.experimental.stop()
+# report = classification_report(np.argmax(y_te,axis=1), np.argmax(y_pred,axis=1), target_names=classes)
+# print('GCN Classification Report: \n {}'.format(report))
