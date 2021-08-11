@@ -58,19 +58,21 @@ epochs = 600
 sparse_mat = scipy.sparse.load_npz('../data/yelp/yelp_adj.npz')
 # yelp_feat = np.load('../data/yelp/yelp.npy')
 
-row_dict = {}
+counts = []
 
 for i in range(716847):
-    try:
-        count = sparse_mat.getrow(i).count_nonzero()
-        row_dict[i] = count
-    except:
-            row_dict[i] = 0
+    counts.append(sparse_mat.getrow(i).count_nonzero())
 
 # print(yelp_feat)
 
+# hist, bin_edges = np.histogram(counts)
 
-create_node_degree_graph('graphs/full_graph_of_degrees_yelp', row_dict)
+# print(hist)
+
+plt.hist(counts, density=True, bins=1000)
+plt.ylim(0, 0.02)
+plt.savefig('yelp.png')
+# create_node_degree_graph('graphs/full_graph_of_degrees_yelp', row_dict)
 
 
 # #A = GCNConv.preprocess(adj).astype('f4')

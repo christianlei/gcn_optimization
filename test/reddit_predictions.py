@@ -109,7 +109,7 @@ adj_test = adj_test[:, :command_line_arg][:command_line_arg,:]
 create_node_degree_graph('full_graph_degrees.png', adj)
 
 
-test_features = csr_matrix(test_features)
+# test_features = csr_matrix(test_features)
 adj_test = csr_matrix(adj_test)
 # csr_matrix.sort_indices(test_features)
 csr_matrix.sort_indices(adj_test)
