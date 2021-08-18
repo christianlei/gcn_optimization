@@ -32,10 +32,12 @@ def loadRedditFromNPZ(dataset_dir):
     data = np.load(dataset_dir+"reddit.npz")
     return adj, data['feats'], data['y_train'], data['y_val'], data['y_test'], data['train_index'], data['val_index'], data['test_index']
 
-adj, features, y_train, y_val, y_test, train_index, val_index, test_index = loadRedditFromNPZ("../data/")
+adj, features, y_train, y_val, y_test, train_index, val_index, test_index = loadRedditFromNPZ("../data/reddit/")
 adj = adj+adj.T
 
-#pdb.set_trace()
+
+
+pdb.set_trace()
 #adj = tf.sparse.reorder(adj)
 command_line_arg = int(sys.argv[1])
 print("command_line: ", command_line_arg)
@@ -52,7 +54,7 @@ adj_train = adj[train_index, :][:, train_index]
 adj_val = adj[val_index, :][:, val_index]
 
 
-checkpoint_path = "training_256/cp.ckpt"
+checkpoint_path = "training_256_reddit/cp.ckpt"
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
 # Create a callback that saves the model's weights
@@ -80,7 +82,7 @@ graph_conv_1 = GCNConv(channels,
                        activation='relu',
                        kernel_regularizer=l2(l2_reg),
                        use_bias=False)([dropout_1, fltr_in])
-
+ 
 dropout_2 = Dropout(dropout)(graph_conv_1)
 graph_conv_2 = GCNConv(num_classes,
                        activation='softmax',

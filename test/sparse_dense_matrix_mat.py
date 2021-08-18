@@ -22,11 +22,13 @@ print("number_of_nodes: ", number_of_nodes)
 
 adj, features, y_train, y_val, y_test, train_index, val_index, test_index = loadRedditFromNPZ("../data/reddit/")
 
-print(features.shape)
 adj = adj+adj.T
 
 adj_test = adj[test_index, :][:, test_index]
 adj_test = adj_test[:, :number_of_nodes][:number_of_nodes,:]
+
+print(adj_test)
+print("adj_test.shape:",  adj_test.shape)
 
 # csr = adj_test.tocsr()
 # csr = csr[0:number_of_nodes]
@@ -36,17 +38,14 @@ coo = adj_test.tocoo()
 # coo = adj.tocoo()
 indices = np.mat([coo.row, coo.col]).transpose()
 adj_sp = sparse.SparseTensor(indices, coo.data, coo.shape)
-adj_sp = sparse.transpose(adj_sp)
+# adj_sp = sparse.transpose(adj_sp)
 rand_array = np.random.rand(number_of_nodes, 256)
-# rand_array = np.random.rand(232965, 232965)
 
 
-pdb.set_trace()
-x = sparse.sparse_dense_matmul(adj_sp, rand_array)
-print(x.shape)
+# pdb.set_trace()
+
 start = time.time()
 y = sparse.sparse_dense_matmul(adj_sp, rand_array)
-print(y.shape)
 end = time.time()
 
 total_time = end - start

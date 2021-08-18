@@ -21,7 +21,7 @@ def encode_label(labels):
 
 def main():
 
-    data_path = '../.spektral/datasets/GraphSage/reddit/'
+    data_path = '../../.spektral/datasets/GraphSage/reddit/'
     data = np.load(data_path+"reddit.npz")
     # adj = sp.load_npz(dataset_dir+"reddit_adj.npz")
     adj = sp.csr_matrix(
@@ -86,12 +86,20 @@ def main():
     tbCallBack_GCN = tf.keras.callbacks.TensorBoard(
         log_dir='./Tensorboard_GCN_reddit',
     )
-    callback_GCN = [tbCallBack_GCN]
 
     #_________________________________________-
 
     # Train model
     validation_data = ([X, A], labels_encoded, val_mask)
+    print(type(X))
+    print(type(A))
+    print(type(labels_encoded))
+    print(type(val_mask))
+
+# <class 'numpy.ndarray'>
+#<class 'scipy.sparse.csr.csr_matrix'>
+#<class 'numpy.ndarray'>
+#<class 'numpy.ndarray'>
     model.fit([X, A],
             labels_encoded,
             sample_weight=train_mask,

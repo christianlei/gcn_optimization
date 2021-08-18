@@ -8,7 +8,6 @@ from tensorflow.keras.regularizers import l2
 import numpy as np
 import scipy.sparse as sp
 from spektral.layers import GCNConv
-from scipy.sparse import csr_matrix
 from tensorflow.keras.optimizers import Adam
 import matplotlib.pyplot as plt
 import statistics
@@ -97,10 +96,11 @@ test_features = features[test_index]
 # print("TEST INDEX SHAPE BEFORE SPLICE:", test_features.shape)
 
 test_features = features[test_index][0:command_line_arg]
+print(test_features.shape)
 adj_test = adj[test_index, :][:, test_index]
 # print("ADJ MATRIX BEFORE", adj_test.shape)
 adj_test = adj_test[:, :command_line_arg][:command_line_arg,:]
-# print("ADJ MATRIX AFTER", adj_test.shape)
+print("ADJ MATRIX AFTER", adj_test.shape)
 
 
 # create_node_degree_graph('degree_test.png', adj_test)
@@ -110,10 +110,9 @@ create_node_degree_graph('full_graph_degrees.png', adj)
 
 
 # test_features = csr_matrix(test_features)
-adj_test = csr_matrix(adj_test)
+adj_test = sp.csr_matrix(adj_test)
 # csr_matrix.sort_indices(test_features)
-csr_matrix.sort_indices(adj_test)
-
+sp.csr_matrix.sort_indices(adj_test)
 
 
 print("TEST INDEX SHAPE AFTER SPLICE:", test_features.shape)
@@ -127,6 +126,6 @@ y_pred = model.predict([test_features, adj_test], batch_size=M)
 end = time.time()
 tf.profiler.experimental.stop()
 
-print("shape: ", y_pred.shape)
+# print("shape: ", y_pred.shape)
 
 print("overall time: ", end-start)
